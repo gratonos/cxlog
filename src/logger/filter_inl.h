@@ -7,7 +7,7 @@
 
 NAMESPACE_CXLOG_BEGIN
 
-const Filter &FillFilter(const Filter &filter);
+const Filter &FillFilter(const Filter &filter) noexcept;
 std::vector<Filter> FillFilters(std::initializer_list<Filter> filters);
 
 NAMESPACE_CXLOG_END
