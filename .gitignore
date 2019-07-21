@@ -30,3 +30,10 @@
 *.exe
 *.out
 *.app
+
+# emacs
+.marked_files.el
+
+# build
+build/
+compile_commands.json
