@@ -9,7 +9,7 @@ NAMESPACE_CXLOG_BEGIN
 struct LoggerConfig final {
     void SetDefaults();
 
-    Level level   = Level::Trace;
+    Level level = Level::Trace;
     Filter filter = nullptr;
 };
 

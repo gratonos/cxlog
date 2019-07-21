@@ -19,8 +19,8 @@ enum class Level : std::size_t {
     Off,
 };
 
-constexpr std::size_t LEVEL_COUNT = static_cast<std::size_t>(Level::Off) -
-                                    static_cast<std::size_t>(Level::Trace);
+constexpr std::size_t LEVEL_COUNT =
+    static_cast<std::size_t>(Level::Off) - static_cast<std::size_t>(Level::Trace);
 
 struct Context final {
     std::string key;
@@ -41,7 +41,7 @@ struct Record final {
 };
 
 struct Slice final {
-    char *ptr       = nullptr;
+    char *ptr = nullptr;
     std::size_t len = 0;
 };
 
@@ -52,7 +52,7 @@ struct Error final {
 
 class Formatter {
     virtual Slice Format(const Record &record) = 0;
-    virtual ~Formatter()                       = default;
+    virtual ~Formatter() = default;
 };
 
 class Writer {
