@@ -6,7 +6,6 @@
 
 NAMESPACE_CXLOG_BEGIN
 
-// Do NOT call any method of the Logger within a ErrorHandler, or it may deadlock.
 using ErrorHandler =
     std::function<void(const Slice &slice, const Record &record, const Error &error)>;
 

@@ -30,9 +30,9 @@ struct Context final {
 struct Record final {
     std::chrono::system_clock::time_point time;
     Level level = Level::Trace;
-    std::string file;
-    std::size_t line = 0;
-    std::string func;
+    const char *file = nullptr; // __FILE__
+    std::size_t line = 0; // __LINE__
+    const char *func = nullptr; // __FUNCTION__
     std::string msg;
 
     std::string prefix;

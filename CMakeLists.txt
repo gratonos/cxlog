@@ -11,6 +11,7 @@ set (SOURCES
     src/logger/config.cpp
     src/logger/error_handler.cpp
     src/logger/filter.cpp
+    src/logger/logger.cpp
     src/logger/logic.cpp)
 
 include_directories (include)
