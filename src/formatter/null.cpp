@@ -1,8 +1,6 @@
 #include <cxlog/formatter/func.h>
 #include <cxlog/formatter/null.h>
 
-#include <memory>
-
 NAMESPACE_CXLOG_BEGIN
 
 namespace {

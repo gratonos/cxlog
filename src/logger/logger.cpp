@@ -44,7 +44,7 @@ void Logger::FormatAndWrite(Level /*level*/, const Record &record) const {
     localtime_r(&time, &tm);
     fmt::printf(
         "time: %s, level: %d, file: %s, line: %d, func: %s, msg: %s, prefix: %s, mark: %d\n",
-        std::put_time(&tm, "%F %T"), static_cast<std::size_t>(record.level), record.file,
+        std::put_time(&tm, "%F %T"), LevelToSize(record.level), record.file,
         record.line, record.func, record.msg, record.prefix, record.mark);
 
     for (auto &context : record.contexts) {

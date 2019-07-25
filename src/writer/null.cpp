@@ -1,8 +1,6 @@
 #include <cxlog/writer/func.h>
 #include <cxlog/writer/null.h>
 
-#include <memory>
-
 NAMESPACE_CXLOG_BEGIN
 
 namespace {

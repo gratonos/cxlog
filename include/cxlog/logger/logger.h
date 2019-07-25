@@ -122,15 +122,25 @@ public:
 public:
     template <typename S, typename... Args>
     void Tracef(const char *file, std::size_t line, const char *func, S &&format,
-        Args &&... args) const;
+        Args &&... args) const {
+
+        Logf(Level::Trace, file, line, func, std::forward<S>(format),
+             std::forward<Args>(args)...);
+    }
 
     template <typename S, typename... Args>
     void Logf(Level level, const char *file, std::size_t line, const char *func, S &&format,
-        Args &&... args) const;
+        Args &&... args) const {
+
+        if (NeedToLog(level)) {
+            Log(level, file, line, func,
+                fmt::sprintf(std::forward<S>(format), std::forward<Args>(args)...));
+        }
+    }
 
 private:
     template <typename T>
-    static inline std::shared_ptr<std::vector<T>> CloneAndAppend(
+    static std::shared_ptr<std::vector<T>> CloneAndAppend(
         const std::shared_ptr<std::vector<T>> &origin, std::initializer_list<T> list) {
 
         auto clone = std::make_shared<std::vector<T>>();
@@ -141,7 +151,13 @@ private:
     }
 
 private:
-    bool NeedToLog(Level level) const;
+    bool NeedToLog(Level level) const {
+        if (level == Level::Off) {
+            throw std::invalid_argument("cxlog: invalid log level");
+        }
+        return LevelToSize(this->additional.level) <= LevelToSize(level) &&
+            LevelToSize(this->GetLevel()) <= LevelToSize(level);
+    }
     void Log(Level level, const char *file, std::size_t line, const char *func,
         std::string &&msg) const;
     void FormatAndWrite(Level level, const Record &record) const;
@@ -150,28 +166,5 @@ private:
     Additional additional; // copy on write, concurrency safe
     std::shared_ptr<Intrinsic> intrinsic = std::make_shared<Intrinsic>();
 };
-
-template <typename S, typename... Args>
-inline void Logger::Tracef(
-    const char *file, std::size_t line, const char *func, S &&format, Args &&... args) const {
-    Logf(Level::Trace, file, line, func, format, args...);
-}
-
-template <typename S, typename... Args>
-inline void Logger::Logf(Level level, const char *file, std::size_t line, const char *func,
-    S &&format, Args &&... args) const {
-
-    if (NeedToLog(level)) {
-        Log(level, file, line, func, fmt::sprintf(format, args...));
-    }
-}
-
-inline bool Logger::NeedToLog(Level level) const {
-    if (level == Level::Off) {
-        throw std::invalid_argument("cxlog: invalid log level");
-    }
-    return static_cast<std::size_t>(additional.level) <= static_cast<std::size_t>(level) &&
-        static_cast<std::size_t>(GetLevel()) <= static_cast<std::size_t>(level);
-}
 
 NAMESPACE_CXLOG_END

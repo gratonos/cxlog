@@ -18,8 +18,11 @@ enum class Level : std::size_t {
     Off,
 };
 
-constexpr std::size_t LEVEL_COUNT =
-    static_cast<std::size_t>(Level::Off) - static_cast<std::size_t>(Level::Trace);
+constexpr size_t LevelToSize(Level level) {
+    return static_cast<std::size_t>(level);
+}
+
+constexpr std::size_t LEVEL_COUNT = LevelToSize(Level::Off) - LevelToSize(Level::Trace);
 
 struct Context final {
     std::string key;
