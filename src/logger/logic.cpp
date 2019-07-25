@@ -1,5 +1,3 @@
-#include "filter_inl.h"
-
 #include <cxlog/logger/logic.h>
 
 NAMESPACE_CXLOG_BEGIN

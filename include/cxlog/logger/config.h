@@ -7,16 +7,45 @@
 
 NAMESPACE_CXLOG_BEGIN
 
-struct LoggerConfig final {
-    LoggerConfig() = default;
-    LoggerConfig(const LoggerConfig &config);
-    LoggerConfig &operator=(const LoggerConfig &config);
-    LoggerConfig(LoggerConfig &&config) noexcept;
-    LoggerConfig &operator=(LoggerConfig &&config) noexcept;
+class LoggerConfig final {
+public:
+    LoggerConfig(Level level = Level::Trace, const Filter &filter = nullptr) {
+        this->level = level;
+        this->filter = FillFilter(filter);
+    }
+    LoggerConfig(const LoggerConfig &config) {
+        this->Copy(config);
+    }
+    LoggerConfig &operator=(const LoggerConfig &config) {
+        if (this != &config) {
+            this->Copy(config);
+        }
+        return *this;
+    }
 
-    void SetDefaults();
+public:
+    Level GetLevel() const noexcept {
+        return this->level;
+    }
+    void SetLevel(Level level) noexcept {
+        this->level = level;
+    }
 
-    std::atomic<Level> level{Level::Trace};
+    Filter GetFilter() const {
+        return this->filter;
+    }
+    void SetFilter(const Filter &filter) {
+        this->filter = FillFilter(filter);
+    }
+
+private:
+    void Copy(const LoggerConfig &config) {
+        this->level = config.level.load();
+        this->filter = config.filter;
+    }
+
+private:
+    std::atomic<Level> level;
     Filter filter;
 };
 

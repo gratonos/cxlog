@@ -3,7 +3,6 @@
 #include <cxlog/macro.h>
 
 #include <chrono>
-#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -51,11 +50,13 @@ struct Error final {
 };
 
 class Formatter {
+public:
     virtual Slice Format(const Record &record) = 0;
     virtual ~Formatter() = default;
 };
 
 class Writer {
+public:
     virtual Error Write(const Slice &slice, const Record &record) = 0;
     virtual ~Writer() = default;
 };

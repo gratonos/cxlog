@@ -1,37 +1,55 @@
 #include <cxlog/logger/logger.h>
 
+#include <time.h>
+
+#include <algorithm>
+#include <iomanip> // todo: delete
+
 NAMESPACE_CXLOG_BEGIN
 
-Logger::Logger(const LoggerConfig &config) {
-    *m_config = config;
-    m_config->SetDefaults();
+void Logger::Log(Level level, const char *file, std::size_t line, const char *func,
+    std::string &&msg) const {
+
+    std::vector<Context> contexts;
+    contexts.reserve(this->additional.statics->size() + this->additional.dynamics->size());
+
+    for (auto &context : *this->additional.statics) {
+        contexts.emplace_back(Context{context.GetKey(), context.GetValue()});
+    }
+    for (auto &context : *this->additional.dynamics) {
+        contexts.emplace_back(Context{context.GetKey(), context.GetValue()});
+    }
+
+    std::lock_guard<decltype(this->intrinsic->lock)> lock(this->intrinsic->lock);
+
+    Record record;
+    record.time = std::chrono::system_clock::now();
+    record.level = level;
+    record.file = file;
+    record.line = line;
+    record.func = func;
+    record.msg = std::move(msg);
+    record.prefix = *this->additional.prefix;
+    record.contexts = std::move(contexts);
+    record.mark = this->additional.mark;
+
+    if (this->additional.filter(record) && this->intrinsic->config.GetFilter()(record)) {
+        FormatAndWrite(level, record);
+    }
 }
 
-Level Logger::GetLevel() const noexcept {
-    return m_config->level;
-}
+void Logger::FormatAndWrite(Level /*level*/, const Record &record) const {
+    auto time = std::chrono::system_clock::to_time_t(record.time);
+    std::tm tm;
+    localtime_r(&time, &tm);
+    fmt::printf(
+        "time: %s, level: %d, file: %s, line: %d, func: %s, msg: %s, prefix: %s, mark: %d\n",
+        std::put_time(&tm, "%F %T"), static_cast<std::size_t>(record.level), record.file,
+        record.line, record.func, record.msg, record.prefix, record.mark);
 
-void Logger::SetLevel(Level level) noexcept {
-    m_config->level = level;
+    for (auto &context : record.contexts) {
+        fmt::printf("key: %s, value: %s\n", context.key, context.value);
+    }
 }
-
-Filter Logger::GetFilter() const {
-    std::lock_guard<decltype(*m_lock)> lock(*m_lock);
-    return m_config->filter;
-}
-
-void Logger::SetFilter(Filter filter) {
-    std::lock_guard<decltype(*m_lock)> lock(*m_lock);
-    m_config->filter = filter;
-}
-
-template <typename... Args>
-void Logger::Tracef(const char *file, std::size_t line, const char *func, Args &&... args) {
-    Logf(Level::Trace, file, line, func, args...);
-}
-
-template <typename... Args>
-void Logger::Logf(
-    Level level, const char *file, std::size_t line, const char *func, Args &&... args) {}
 
 NAMESPACE_CXLOG_END

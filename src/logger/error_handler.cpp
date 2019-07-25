@@ -1,11 +1,13 @@
-#include "error_handler_inl.h"
+#include <cxlog/logger/error_handler.h>
 
 #include <iostream>
 #include <sstream>
 
 NAMESPACE_CXLOG_BEGIN
 
+namespace {
 const ErrorHandler g_nullErrorHandler = [](const Slice &, const Record &, const Error &) {};
+}
 
 const ErrorHandler &NullErrorHandler() noexcept {
     return g_nullErrorHandler;

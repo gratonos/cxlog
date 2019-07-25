@@ -10,6 +10,8 @@ using ErrorHandler =
     std::function<void(const Slice &slice, const Record &record, const Error &error)>;
 
 const ErrorHandler &NullErrorHandler() noexcept;
+const ErrorHandler &FillErrorHandler(const ErrorHandler &handler) noexcept;
+
 void Report(const Slice &, const Record &record, const Error &error);
 void ReportDetails(const Slice &slice, const Record &, const Error &error);
 

@@ -1,8 +1,10 @@
-#include "filter_inl.h"
+#include <cxlog/logger/filter.h>
 
 NAMESPACE_CXLOG_BEGIN
 
+namespace {
 const Filter g_nullFilter = [](const Record &) -> bool { return true; };
+}
 
 const Filter &NullFilter() noexcept {
     return g_nullFilter;
