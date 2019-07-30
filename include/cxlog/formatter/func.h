@@ -8,19 +8,19 @@ NAMESPACE_CXLOG_BEGIN
 
 class FormatterFunc final : public Formatter {
 public:
-    using Func = std::function<Slice(const Record &record)>;
+    using Func = std::function<std::string(const Record &record)>;
 
 public:
     FormatterFunc(const Func &func = nullptr) {
         if (func == nullptr) {
-            this->func = [](const Record &) -> Slice { return Slice{}; };
+            this->func = [](const Record &) -> std::string { return std::string(); };
         } else {
             this->func = func;
         }
     }
 
 public:
-    Slice Format(const Record &record) override {
+    std::string Format(const Record &record) override {
         return this->func(record);
     }
 

@@ -6,16 +6,16 @@
 NAMESPACE_CXLOG_BEGIN
 
 namespace {
-const ErrorHandler g_nullErrorHandler = [](const Slice &, const Record &, const Error &) {};
+const ErrorHandler g_nullHandler = [](const std::string &, const Record &, const Error &) {};
 }
 
 const ErrorHandler &NullErrorHandler() noexcept {
-    return g_nullErrorHandler;
+    return g_nullHandler;
 }
 
 const ErrorHandler &FillErrorHandler(const ErrorHandler &handler) noexcept {
     if (handler == nullptr) {
-        return g_nullErrorHandler;
+        return g_nullHandler;
     } else {
         return handler;
     }
@@ -27,28 +27,26 @@ inline void OutputError(std::ostringstream &stream, const Error &error) {
 
 inline void OutputBasic(std::ostringstream &stream, const Record &record) {
     stream << ", file: " << record.file << ", line: " << record.line
-           << ", func: " << record.func;
+           << ", func: " << record.func << std::endl;
 }
 
-inline void OutputDetails(std::ostringstream &stream, const Slice &slice) {
+inline void OutputDetails(std::ostringstream &stream, const std::string &log) {
     stream << ", log: ";
-    stream.write(slice.ptr, slice.len);
+    stream << log << std::endl;
 }
 
-void Report(const Slice &, const Record &record, const Error &error) {
+void Report(const std::string &, const Record &record, const Error &error) {
     std::ostringstream stream;
     OutputError(stream, error);
     OutputBasic(stream, record);
-    const std::string &str = stream.str();
-    std::cerr.write(str.c_str(), str.length());
+    std::cerr << stream.str();
 }
 
-void ReportDetails(const Slice &slice, const Record &, const Error &error) {
+void ReportDetails(const std::string &log, const Record &, const Error &error) {
     std::ostringstream stream;
     OutputError(stream, error);
-    OutputDetails(stream, slice);
-    const std::string &str = stream.str();
-    std::cerr.write(str.c_str(), str.length());
+    OutputDetails(stream, log);
+    std::cerr << stream.str();
 }
 
 NAMESPACE_CXLOG_END

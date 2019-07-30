@@ -11,8 +11,8 @@ public:
     WriterWrapper(std::ostream &stream) : stream(stream) {}
 
 public:
-    Error Write(const Slice &slice, const Record &) override {
-        this->stream.write(slice.ptr, slice.len);
+    Error Write(const std::string &log, const Record &) override {
+        this->stream << log;
         return Error{}; // TODO: handle error
     }
 

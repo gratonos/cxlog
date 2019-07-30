@@ -76,13 +76,13 @@ public:
     bool NeedToLog(Level level, const Record &record) const {
         return LevelToSize(this->level) <= LevelToSize(level) && this->filter(record);
     }
-    Slice Format(const Record &record) const {
+    std::string Format(const Record &record) const {
         return this->formatter->Format(record);
     }
-    void Write(const Slice &slice, const Record &record) const {
-        const Error &error = this->writer->Write(slice, record);
+    void Write(const std::string &log, const Record &record) const {
+        const Error &error = this->writer->Write(log, record);
         if (error.error != 0) {
-            this->handler(slice, record, error);
+            this->handler(log, record, error);
         }
     }
 

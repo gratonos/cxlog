@@ -8,20 +8,20 @@ NAMESPACE_CXLOG_BEGIN
 
 class WriterFunc final : public Writer {
 public:
-    using Func = std::function<Error(const Slice &slice, const Record &record)>;
+    using Func = std::function<Error(const std::string &log, const Record &record)>;
 
 public:
     WriterFunc(const Func &func = nullptr) {
         if (func == nullptr) {
-            this->func = [](const Slice &, const Record &) -> Error { return Error{}; };
+            this->func = [](const std::string &, const Record &) -> Error { return Error{}; };
         } else {
             this->func = func;
         }
     }
 
 public:
-    Error Write(const Slice &slice, const Record &record) override {
-        return this->func(slice, record);
+    Error Write(const std::string &log, const Record &record) override {
+        return this->func(log, record);
     }
 
 private:

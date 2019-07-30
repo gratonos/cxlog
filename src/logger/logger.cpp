@@ -36,18 +36,18 @@ void Logger::Log(Level level, const char *file, std::size_t line, const char *fu
 
 void Logger::FormatAndWrite(Level level, const Record &record) const {
     const Intrinsic &intrinsic = *this->intrinsic;
-    std::array<Slice, SLOT_COUNT> slices;
+    std::array<std::string, SLOT_COUNT> logs;
     for (std::size_t i = 0; i < SLOT_COUNT; i++) {
         const Slot &slot = intrinsic.slots[i];
         if (slot.NeedToLog(level, record)) {
-            Slice &slice = slices[i];
-            if (slice == Slice{}) {
-                slice = slot.Format(record);
+            std::string &log = logs[i];
+            if (log.empty()) {
+                log = slot.Format(record);
                 for (size_t n : intrinsic.equivalents[i]) {
-                    slices[n] = slice;
+                    logs[n] = log;
                 }
             }
-            slot.Write(slice, record);
+            slot.Write(log, record);
         }
     }
 }

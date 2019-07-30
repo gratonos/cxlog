@@ -42,19 +42,6 @@ struct Record final {
     bool mark = false;
 };
 
-struct Slice final {
-    char *ptr = nullptr;
-    std::size_t len = 0;
-};
-
-inline bool operator==(const Slice &lhs, const Slice &rhs) noexcept {
-    return lhs.ptr == rhs.ptr && lhs.len == rhs.len;
-}
-
-inline bool operator!=(const Slice &lhs, const Slice &rhs) noexcept {
-    return !(lhs == rhs);
-}
-
 struct Error final {
     std::int64_t error = 0;
     std::string desc;
@@ -62,13 +49,13 @@ struct Error final {
 
 class Formatter {
 public:
-    virtual Slice Format(const Record &record) = 0;
+    virtual std::string Format(const Record &record) = 0;
     virtual ~Formatter() = default;
 };
 
 class Writer {
 public:
-    virtual Error Write(const Slice &slice, const Record &record) = 0;
+    virtual Error Write(const std::string &log, const Record &record) = 0;
     virtual ~Writer() = default;
 };
 
