@@ -22,6 +22,15 @@ public:
         }
         return *this;
     }
+    LoggerConfig(LoggerConfig &&config) noexcept {
+        this->Move(std::move(config));
+    }
+    LoggerConfig &operator=(LoggerConfig &&config) noexcept {
+        if (this != &config) {
+            this->Move(std::move(config));
+        }
+        return *this;
+    }
 
 public:
     Level GetLevel() const noexcept {
@@ -38,10 +47,19 @@ public:
         this->filter = FillFilter(filter);
     }
 
+public:
+    bool DoFilter(const Record &record) const {
+        return this->filter(record);
+    }
+
 private:
     void Copy(const LoggerConfig &config) {
         this->level = config.level.load();
         this->filter = config.filter;
+    }
+    void Move(LoggerConfig &&config) noexcept {
+        this->level = config.level.load();
+        this->filter = std::move(config.filter);
     }
 
 private:

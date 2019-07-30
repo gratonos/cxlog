@@ -10,7 +10,7 @@
 NAMESPACE_CXLOG_BEGIN
 
 // ATTENTION: You SHOULD be careful about concurrency safety or deadlocks with dynamic contexts.
-using Dynamic = std::function<std::string() noexcept>;
+using Dynamic = std::function<std::string()>;
 
 class StaticContext final {
 public:

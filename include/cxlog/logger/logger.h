@@ -3,9 +3,13 @@
 #include <cxlog/logger/config.h>
 #include <cxlog/logger/context.h>
 #include <cxlog/logger/slot.h>
+#include <cxlog/logger/timing.h>
 
 #include <fmt/printf.h>
 
+#include <algorithm>
+#include <array>
+#include <cstdlib>
 #include <memory>
 #include <mutex>
 
@@ -29,10 +33,12 @@ private:
     };
     struct Intrinsic final {
         LoggerConfig config;
-        // slots       []Slot
-        // equivalents [][]int // indexes of equivalent formatters
+        std::array<Slot, SLOT_COUNT> slots;
+        // indexes of equivalent formatters, used to avoid duplicated formatting
+        std::array<std::vector<std::size_t>, SLOT_COUNT> equivalents;
         std::recursive_mutex lock;
     };
+    using LockGuard = std::lock_guard<std::recursive_mutex>;
 
 public:
     Logger(const LoggerConfig &config) {
@@ -77,20 +83,20 @@ public:
     }
     Logger WithStatics(std::initializer_list<StaticContext> static_list) const & {
         Logger logger(*this);
-        logger.additional.statics = CloneAndAppend(logger.additional.statics, static_list);
+        logger.additional.statics = CopyAppend(logger.additional.statics, static_list);
         return std::move(logger);
     }
     Logger WithStatics(std::initializer_list<StaticContext> static_list) && {
-        this->additional.statics = CloneAndAppend(this->additional.statics, static_list);
+        this->additional.statics = CopyAppend(this->additional.statics, static_list);
         return std::move(*this);
     }
     Logger WithDynamics(std::initializer_list<DynamicContext> dynamic_list) const & {
         Logger logger(*this);
-        logger.additional.dynamics = CloneAndAppend(logger.additional.dynamics, dynamic_list);
+        logger.additional.dynamics = CopyAppend(logger.additional.dynamics, dynamic_list);
         return std::move(logger);
     }
     Logger WithDynamics(std::initializer_list<DynamicContext> dynamic_list) && {
-        this->additional.dynamics = CloneAndAppend(this->additional.dynamics, dynamic_list);
+        this->additional.dynamics = CopyAppend(this->additional.dynamics, dynamic_list);
         return std::move(*this);
     }
     Logger WithMark(bool mark) const & {
@@ -111,23 +117,15 @@ public:
         this->intrinsic->config.SetLevel(level);
     }
     Filter GetFilter() const {
-        std::lock_guard<decltype(this->intrinsic->lock)> lock(this->intrinsic->lock);
+        LockGuard lock(this->intrinsic->lock);
         return this->intrinsic->config.GetFilter();
     }
     void SetFilter(const Filter &filter) {
-        std::lock_guard<decltype(this->intrinsic->lock)> lock(this->intrinsic->lock);
+        LockGuard lock(this->intrinsic->lock);
         this->intrinsic->config.SetFilter(filter);
     }
 
 public:
-    template <typename S, typename... Args>
-    void Tracef(const char *file, std::size_t line, const char *func, S &&format,
-        Args &&... args) const {
-
-        Logf(Level::Trace, file, line, func, std::forward<S>(format),
-             std::forward<Args>(args)...);
-    }
-
     template <typename S, typename... Args>
     void Logf(Level level, const char *file, std::size_t line, const char *func, S &&format,
         Args &&... args) const {
@@ -137,10 +135,116 @@ public:
                 fmt::sprintf(std::forward<S>(format), std::forward<Args>(args)...));
         }
     }
+    template <typename S, typename... Args>
+    TimingDone Timingf(Level level, const char *file, std::size_t line, const char *func,
+        S &&format, Args &&... args) const {
+
+        if (NeedToLog(level)) {
+            std::string msg =
+                fmt::sprintf(std::forward<S>(format), std::forward<Args>(args)...);
+            auto start = std::chrono::system_clock::now();
+            return [logger = Logger(*this), level, file, line, func, msg = std::move(msg),
+                       start = std::move(start)] {
+                std::chrono::duration<std::int64_t, std::nano> cost =
+                    std::chrono::system_clock::now() - start;
+                logger.Log(level, file, line, func,
+                    fmt::sprintf("%s (cost: %lld ns)", std::move(msg), cost.count()));
+            };
+        } else {
+            return [] {};
+        }
+    }
+
+public:
+    Slot GetSlot(SlotIndex index) const {
+        LockGuard lock(this->intrinsic->lock);
+        return this->SlotRef(index);
+    }
+    void SetSlot(SlotIndex index, const Slot &slot) {
+        LockGuard lock(this->intrinsic->lock);
+        this->SlotRef(index) = slot;
+        this->UpdateEquivalents();
+    }
+    void UpdateSlot(SlotIndex index, const std::function<Slot(Slot)> &func) {
+        LockGuard lock(this->intrinsic->lock);
+        this->SlotRef(index) = func(this->SlotRef(index));
+        this->UpdateEquivalents();
+    }
+    void ResetSlot(SlotIndex index) {
+        LockGuard lock(this->intrinsic->lock);
+        this->SlotRef(index) = Slot{};
+        this->UpdateEquivalents();
+    }
+    void ResetAllSlots() {
+        LockGuard lock(this->intrinsic->lock);
+        for (Slot &slot : this->intrinsic->slots) {
+            slot = Slot{};
+        }
+        this->UpdateEquivalents();
+    }
+    void CopySlot(SlotIndex dst, SlotIndex src) {
+        LockGuard lock(this->intrinsic->lock);
+        this->SlotRef(dst) = this->SlotRef(src);
+        this->UpdateEquivalents();
+    }
+    void MoveSlot(SlotIndex to, SlotIndex from) {
+        LockGuard lock(this->intrinsic->lock);
+        this->SlotRef(to) = std::move(this->SlotRef(from));
+        this->SlotRef(from) = Slot{};
+        this->UpdateEquivalents();
+    }
+    void SwapSlot(SlotIndex left, SlotIndex right) {
+        LockGuard lock(this->intrinsic->lock);
+        Slot slot = std::move(this->SlotRef(left));
+        this->SlotRef(left) = std::move(this->SlotRef(right));
+        this->SlotRef(right) = std::move(slot);
+        this->UpdateEquivalents();
+    }
+    std::shared_ptr<Formatter> GetSlotFormatter(SlotIndex index) const {
+        LockGuard lock(this->intrinsic->lock);
+        return this->SlotRef(index).GetFormatter();
+    }
+    void SetSlotFormatter(SlotIndex index, const std::shared_ptr<Formatter> &formatter) {
+        LockGuard lock(this->intrinsic->lock);
+        this->SlotRef(index).SetFormatter(formatter);
+        this->UpdateEquivalents();
+    }
+    std::shared_ptr<Writer> GetSlotWriter(SlotIndex index) const {
+        LockGuard lock(this->intrinsic->lock);
+        return this->SlotRef(index).GetWriter();
+    }
+    void SetSlotWriter(SlotIndex index, const std::shared_ptr<Writer> &writer) {
+        LockGuard lock(this->intrinsic->lock);
+        this->SlotRef(index).SetWriter(writer);
+    }
+    Level GetSlotLevel(SlotIndex index) const {
+        LockGuard lock(this->intrinsic->lock);
+        return this->SlotRef(index).GetLevel();
+    }
+    void SetSlotLevel(SlotIndex index, Level level) {
+        LockGuard lock(this->intrinsic->lock);
+        this->SlotRef(index).SetLevel(level);
+    }
+    Filter GetSlotFilter(SlotIndex index) const {
+        LockGuard lock(this->intrinsic->lock);
+        return this->SlotRef(index).GetFilter();
+    }
+    void SetSlotFilter(SlotIndex index, const Filter &filter) {
+        LockGuard lock(this->intrinsic->lock);
+        this->SlotRef(index).SetFilter(filter);
+    }
+    ErrorHandler GetSlotErrorHandler(SlotIndex index) const {
+        LockGuard lock(this->intrinsic->lock);
+        return this->SlotRef(index).GetErrorHandler();
+    }
+    void SetSlotErrorHandler(SlotIndex index, const ErrorHandler &handler) {
+        LockGuard lock(this->intrinsic->lock);
+        this->SlotRef(index).SetErrorHandler(handler);
+    }
 
 private:
     template <typename T>
-    static std::shared_ptr<std::vector<T>> CloneAndAppend(
+    static std::shared_ptr<std::vector<T>> CopyAppend(
         const std::shared_ptr<std::vector<T>> &origin, std::initializer_list<T> list) {
 
         auto clone = std::make_shared<std::vector<T>>();
@@ -161,6 +265,13 @@ private:
     void Log(Level level, const char *file, std::size_t line, const char *func,
         std::string &&msg) const;
     void FormatAndWrite(Level level, const Record &record) const;
+    const Slot &SlotRef(SlotIndex index) const {
+        return this->intrinsic->slots[SlotToSize(index)];
+    }
+    Slot &SlotRef(SlotIndex index) {
+        return this->intrinsic->slots[SlotToSize(index)];
+    }
+    void UpdateEquivalents();
 
 private:
     Additional additional; // copy on write, concurrency safe

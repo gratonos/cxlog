@@ -10,6 +10,23 @@
 
 NAMESPACE_CXLOG_BEGIN
 
+enum class SlotIndex : std::size_t {
+    Slot0,
+    Slot1,
+    Slot2,
+    Slot3,
+    Slot4,
+    Slot5,
+    Slot6,
+    Slot7,
+};
+
+constexpr size_t SlotToSize(SlotIndex slot) noexcept {
+    return static_cast<std::size_t>(slot);
+}
+
+constexpr std::size_t SLOT_COUNT = 8;
+
 class Slot final {
 public:
     Slot(const std::shared_ptr<Formatter> &formatter = nullptr,
@@ -24,16 +41,16 @@ public:
     }
 
 public:
-    const std::shared_ptr<Formatter> &GetFormatter() const noexcept {
+    std::shared_ptr<Formatter> GetFormatter() const noexcept {
         return this->formatter;
     }
-    void SetFormatter(const std::shared_ptr<Formatter> &formatter) {
+    void SetFormatter(const std::shared_ptr<Formatter> &formatter) noexcept {
         this->formatter = FillFormatter(formatter);
     }
-    const std::shared_ptr<Writer> &GetWriter() const noexcept {
+    std::shared_ptr<Writer> GetWriter() const noexcept {
         return this->writer;
     }
-    void SetWriter(const std::shared_ptr<Writer> &writer) {
+    void SetWriter(const std::shared_ptr<Writer> &writer) noexcept {
         this->writer = FillWriter(writer);
     }
     Level GetLevel() const noexcept {
@@ -42,17 +59,31 @@ public:
     void SetLevel(Level level) noexcept {
         this->level = level;
     }
-    const Filter &GetFilter() const noexcept {
+    Filter GetFilter() const {
         return this->filter;
     }
     void SetFilter(const Filter &filter) {
         this->filter = FillFilter(filter);
     }
-    const ErrorHandler &GetErrorHandler() const noexcept {
+    ErrorHandler GetErrorHandler() const {
         return this->handler;
     }
     void SetErrorHandler(const ErrorHandler &handler) {
         this->handler = FillErrorHandler(handler);
+    }
+
+public:
+    bool NeedToLog(Level level, const Record &record) const {
+        return LevelToSize(this->level) <= LevelToSize(level) && this->filter(record);
+    }
+    Slice Format(const Record &record) const {
+        return this->formatter->Format(record);
+    }
+    void Write(const Slice &slice, const Record &record) const {
+        const Error &error = this->writer->Write(slice, record);
+        if (error.error != 0) {
+            this->handler(slice, record, error);
+        }
     }
 
 private:

@@ -5,7 +5,7 @@ NAMESPACE_CXLOG_BEGIN
 Filter And(std::initializer_list<Filter> filter_list) {
     std::vector<Filter> filters = FillFilters(filter_list);
     return [filters = std::move(filters)](const Record &record) -> bool {
-        for (auto &filter : filters) {
+        for (const Filter &filter : filters) {
             if (!filter(record)) {
                 return false;
             }
@@ -17,7 +17,7 @@ Filter And(std::initializer_list<Filter> filter_list) {
 Filter Or(std::initializer_list<Filter> filter_list) {
     std::vector<Filter> filters = FillFilters(filter_list);
     return [filters = std::move(filters)](const Record &record) -> bool {
-        for (auto &filter : filters) {
+        for (const Filter &filter : filters) {
             if (filter(record)) {
                 return true;
             }

@@ -18,7 +18,7 @@ enum class Level : std::size_t {
     Off,
 };
 
-constexpr size_t LevelToSize(Level level) {
+constexpr size_t LevelToSize(Level level) noexcept {
     return static_cast<std::size_t>(level);
 }
 
@@ -46,6 +46,14 @@ struct Slice final {
     char *ptr = nullptr;
     std::size_t len = 0;
 };
+
+inline bool operator==(const Slice &lhs, const Slice &rhs) noexcept {
+    return lhs.ptr == rhs.ptr && lhs.len == rhs.len;
+}
+
+inline bool operator!=(const Slice &lhs, const Slice &rhs) noexcept {
+    return !(lhs == rhs);
+}
 
 struct Error final {
     std::int64_t error = 0;
