@@ -2,6 +2,7 @@
 
 #include <cxlog/logger/config.h>
 #include <cxlog/logger/context.h>
+#include <cxlog/logger/pretty.h>
 #include <cxlog/logger/slot.h>
 #include <cxlog/logger/timing.h>
 
@@ -145,10 +146,9 @@ public:
             auto start = std::chrono::system_clock::now();
             return [logger = Logger(*this), level, file, line, func, msg = std::move(msg),
                        start = std::move(start)] {
-                std::chrono::duration<std::int64_t, std::nano> cost =
-                    std::chrono::system_clock::now() - start;
+                auto cost = std::chrono::system_clock::now() - start;
                 logger.Log(level, file, line, func,
-                    fmt::sprintf("%s (cost: %lld ns)", std::move(msg), cost.count()));
+                    fmt::sprintf("%s (cost: %s)", std::move(msg), Pretty(cost)));
             };
         } else {
             return [] {};
