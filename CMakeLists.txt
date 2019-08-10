@@ -15,6 +15,8 @@ set (SOURCES
 
     src/formatter/null.cpp
 
+    src/formatter/text/formatter.cpp
+
     src/writer/null.cpp
     )
 
