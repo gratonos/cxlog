@@ -1,28 +1,12 @@
 #pragma once
 
-#include <cxlog/macro.h>
+#include <cxlog/iface/level.h>
 
 #include <chrono>
 #include <string>
 #include <vector>
 
 NAMESPACE_CXLOG_BEGIN
-
-enum class Level : std::size_t {
-    Trace,
-    Debug,
-    Info,
-    Warn,
-    Error,
-    Fatal,
-    Off,
-};
-
-constexpr size_t LevelToSize(Level level) noexcept {
-    return static_cast<std::size_t>(level);
-}
-
-constexpr std::size_t LEVEL_COUNT = LevelToSize(Level::Off) - LevelToSize(Level::Trace);
 
 struct Context final {
     std::string key;

@@ -259,8 +259,7 @@ private:
         if (level == Level::Off) {
             throw std::invalid_argument("cxlog: invalid log level");
         }
-        return LevelToSize(this->additional.level) <= LevelToSize(level) &&
-            LevelToSize(this->GetLevel()) <= LevelToSize(level);
+        return this->additional.level <= level && this->GetLevel() <= level;
     }
     void Log(Level level, const char *file, std::size_t line, const char *func,
         std::string &&msg) const;

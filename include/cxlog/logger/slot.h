@@ -74,7 +74,7 @@ public:
 
 public:
     bool NeedToLog(Level level, const Record &record) const {
-        return LevelToSize(this->level) <= LevelToSize(level) && this->filter(record);
+        return this->level <= level && this->filter(record);
     }
     std::string Format(const Record &record) const {
         return this->formatter->Format(record);
