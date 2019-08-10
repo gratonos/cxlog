@@ -49,10 +49,10 @@ private:
     const std::string ResetSeq = "\033[0m";
 
 private:
-    std::array<Color, LEVEL_COUNT> colors;
+    std::array<Color, LogLevelCount> colors;
     Color mark_color;
 
-    std::array<std::string, LEVEL_COUNT> color_seqs;
+    std::array<std::string, LogLevelCount> color_seqs;
     std::string mark_color_seq;
 };
 

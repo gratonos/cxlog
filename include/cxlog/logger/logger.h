@@ -34,9 +34,9 @@ private:
     };
     struct Intrinsic final {
         LoggerConfig config;
-        std::array<Slot, SLOT_COUNT> slots;
+        std::array<Slot, SlotCount> slots;
         // indexes of equivalent formatters, used to avoid duplicated formatting
-        std::array<std::vector<std::size_t>, SLOT_COUNT> equivalents;
+        std::array<std::vector<std::size_t>, SlotCount> equivalents;
         std::recursive_mutex lock;
     };
     using LockGuard = std::lock_guard<std::recursive_mutex>;
@@ -265,10 +265,10 @@ private:
         std::string &&msg) const;
     void FormatAndWrite(Level level, const Record &record) const;
     const Slot &SlotRef(SlotIndex index) const {
-        return this->intrinsic->slots[SlotToSize(index)];
+        return this->intrinsic->slots[SlotToSizeT(index)];
     }
     Slot &SlotRef(SlotIndex index) {
-        return this->intrinsic->slots[SlotToSize(index)];
+        return this->intrinsic->slots[SlotToSizeT(index)];
     }
     void UpdateEquivalents();
 

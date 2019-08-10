@@ -23,9 +23,9 @@ template <typename Rep, typename Period>
 inline std::string Pretty(const std::chrono::duration<Rep, Period> &duration) {
     using namespace std::chrono_literals;
 
-    static constexpr std::size_t usec_per_sec = Microseconds(1s);
+    static constexpr std::size_t USecsPerSec = Microseconds(1s);
     std::int64_t s = Seconds(duration);
-    std::int64_t us = Microseconds(duration) % usec_per_sec;
+    std::int64_t us = Microseconds(duration) % USecsPerSec;
 
     return fmt::sprintf("%lld.%06lld s", s, us);
 }

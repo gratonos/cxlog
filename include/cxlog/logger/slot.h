@@ -21,11 +21,11 @@ enum class SlotIndex : std::size_t {
     Slot7,
 };
 
-constexpr size_t SlotToSize(SlotIndex slot) noexcept {
+constexpr size_t SlotToSizeT(SlotIndex slot) noexcept {
     return static_cast<std::size_t>(slot);
 }
 
-constexpr std::size_t SLOT_COUNT = 8;
+constexpr std::size_t SlotCount = 8;
 
 class Slot final {
 public:
