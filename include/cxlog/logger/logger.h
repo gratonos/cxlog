@@ -143,10 +143,10 @@ public:
         if (NeedToLog(level)) {
             std::string msg =
                 fmt::sprintf(std::forward<S>(format), std::forward<Args>(args)...);
-            auto start = std::chrono::system_clock::now();
+            auto start = Clock::now();
             return [logger = Logger(*this), level, file, line, func, msg = std::move(msg),
                        start = std::move(start)] {
-                auto cost = std::chrono::system_clock::now() - start;
+                auto cost = Clock::now() - start;
                 logger.Log(level, file, line, func,
                     fmt::sprintf("%s (cost: %s)", std::move(msg), Pretty(cost)));
             };

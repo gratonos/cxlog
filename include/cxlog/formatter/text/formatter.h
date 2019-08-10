@@ -2,38 +2,29 @@
 
 #include <cxlog/formatter/text/color_mgr.h>
 #include <cxlog/formatter/text/config.h>
+#include <cxlog/formatter/text/header_appender.h>
 #include <cxlog/iface/iface.h>
 
+#include <fmt/core.h>
+
 #include <mutex>
+#include <string>
+#include <vector>
 
 NAMESPACE_CXLOG_BEGIN
 
 class TextFormatter final : public Formatter {
-public:
-    static std::map<Level, Color> DefaultColorMapping() {
-        return std::map<Level, Color>{
-            {Level::Trace, Color::Green},
-            {Level::Debug, Color::Green},
-            {Level::Info, Color::Green},
-            {Level::Warn, Color::Yellow},
-            {Level::Error, Color::Red},
-            {Level::Fatal, Color::Red},
-        };
-    }
-
 private:
     using LockGuard = std::lock_guard<std::recursive_mutex>;
 
 public:
     TextFormatter(const TextConfig &config) : color_mgr(config.color_map, config.mark_color) {
-        this->header = config.header;
         this->coloring = config.coloring;
+        this->SetHeader(config.header);
     }
 
 public:
-    std::string Format(const Record &record) override {
-        return record.msg;
-    }
+    std::string Format(const Record &record) override;
 
 public:
     std::string GetHeader() const {
@@ -71,10 +62,24 @@ public:
     }
 
 private:
+    bool AddAppender(const std::string &element, const std::string &property,
+        const std::string &fmtstr, const std::string &static_text) {
+        try {
+            this->appenders.emplace_back(element, property, fmtstr, static_text);
+        } catch (const std::invalid_argument &) {
+            return false;
+        }
+        return true;
+    }
+
+private:
     std::string header;
     bool coloring;
 
     ColorMgr color_mgr;
+    std::vector<HeaderAppender> appenders;
+    std::string suffix;
+    fmt::memory_buffer buf;
 
     mutable std::recursive_mutex lock;
 };

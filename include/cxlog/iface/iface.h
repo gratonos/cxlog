@@ -8,13 +8,15 @@
 
 NAMESPACE_CXLOG_BEGIN
 
+using Clock = std::chrono::system_clock;
+
 struct Context final {
     std::string key;
     std::string value;
 };
 
 struct Record final {
-    std::chrono::system_clock::time_point time;
+    Clock::time_point time;
     Level level = Level::Trace;
     const char *file = nullptr; // __FILE__
     std::size_t line = 0; // __LINE__

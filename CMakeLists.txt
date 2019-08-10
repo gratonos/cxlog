@@ -16,6 +16,8 @@ set (SOURCES
     src/formatter/null.cpp
 
     src/formatter/text/formatter.cpp
+    src/formatter/text/header_appender.cpp
+    src/formatter/text/time_formatter.cpp
 
     src/writer/null.cpp
     )

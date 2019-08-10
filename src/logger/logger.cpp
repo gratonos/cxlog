@@ -19,7 +19,7 @@ void Logger::Log(Level level, const char *file, std::size_t line, const char *fu
     LockGuard lock(this->intrinsic->lock);
 
     Record record;
-    record.time = std::chrono::system_clock::now();
+    record.time = Clock::now();
     record.level = level;
     record.file = file;
     record.line = line;
