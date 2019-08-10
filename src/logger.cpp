@@ -1,1 +1,1 @@
-#include <cxlog/iface/iface.h>
+#include <cxlog/logger.h>
