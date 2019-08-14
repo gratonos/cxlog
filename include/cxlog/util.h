@@ -18,30 +18,19 @@ constexpr std::int64_t Seconds(const std::chrono::duration<Rep, Period> &duratio
 template <typename Rep, typename Period>
 constexpr std::int64_t MilliSeconds(const std::chrono::duration<Rep, Period> &duration) {
     using namespace std::chrono_literals;
-    constexpr std::int64_t MSecsPerSec =
-        std::chrono::duration_cast<std::chrono::milliseconds>(1s).count();
-
-    return std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() %
-        MSecsPerSec;
+    return std::chrono::duration_cast<std::chrono::milliseconds>(duration % 1s).count();
 }
 
 template <typename Rep, typename Period>
 constexpr std::int64_t MicroSeconds(const std::chrono::duration<Rep, Period> &duration) {
     using namespace std::chrono_literals;
-    constexpr std::int64_t USecsPerSec =
-        std::chrono::duration_cast<std::chrono::microseconds>(1s).count();
-
-    return std::chrono::duration_cast<std::chrono::microseconds>(duration).count() %
-        USecsPerSec;
+    return std::chrono::duration_cast<std::chrono::microseconds>(duration % 1s).count();
 }
 
 template <typename Rep, typename Period>
 constexpr std::int64_t NanoSeconds(const std::chrono::duration<Rep, Period> &duration) {
     using namespace std::chrono_literals;
-    constexpr std::int64_t NSecsPerSec =
-        std::chrono::duration_cast<std::chrono::nanoseconds>(1s).count();
-
-    return std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count() % NSecsPerSec;
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(duration % 1s).count();
 }
 
 inline std::string ToLower(const std::string &str) noexcept {
